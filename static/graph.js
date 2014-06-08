@@ -28,6 +28,16 @@ function killChildren(elem) {
   elem.removeChild( elem.childNodes.item(0) );
 }
 
+// borrowed from http://stackoverflow.com/questions/901115
+//  (minor adaption for default value support)
+function getParameterByName(name, df) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results == null ? df : decodeURIComponent(
+      results[1].replace(/\+/g, " "));
+}
+
 function setClass(elem, c) {
  elem.setAttribute("class", c);
  elem.setAttribute("className", c); /* for MSIE */
@@ -92,7 +102,8 @@ function graphs_init() {
   var g =  makeElemClass("div", "outergraph");
   gr.appendChild(g);
   graphs[i].graph = g;
-  if (i % 2 == 1) gr.appendChild(makeClear());
+  var cols = parseInt(getParameterByName("c","2"));
+  if ((i+1) % (cols != NaN ? cols : 2) == 0) gr.appendChild(makeClear());
  }
 
  /* create buttons */
@@ -110,6 +121,27 @@ function graphs_init() {
  b.appendChild(b_reload);
  b.appendChild(document.createTextNode(" - automatic reload is: "));
  b.appendChild(b_autoreload);
+
+ var divider = document.createElement("span");
+ divider.setAttribute("class","divider");
+ b.appendChild(divider);
+ b.appendChild(document.createTextNode(" sizes: "));
+
+ var g_dimensions = {
+  'sml': { 'width': 320, 'height': 200, 'cols': 2 },
+  'lge': { 'width': 480, 'height': 320, 'cols': 2 },
+  'wide': { 'width': 800, 'height': 200, 'cols': 1 },
+ }
+ for (k in g_dimensions) {
+   var b_size = document.createElement("a");
+   var g_dim = g_dimensions[k];
+   b_size.setAttribute("class","size_button");
+   b_size.setAttribute("href", "javascript:graph_dimensions(" 
+    + g_dim.width + "," + g_dim.height + "," + g_dim.cols + ")" );
+   b_size.appendChild(document.createTextNode(k));
+   b.appendChild(b_size);
+ }  
+
  gr.appendChild(b);
 
  graph_reload();
@@ -142,6 +174,11 @@ function reload_loop() {
   graph_reload();
   setTimeout("reload_loop()", 1000);
  }
+}
+
+function graph_dimensions(width, height, cols) {
+  window.location.assign( window.location.href.replace(/\?.*/,
+      "?w=" + width + "&h=" + height + "&c=" + cols) );
 }
 
 function poll() {
@@ -189,6 +226,9 @@ function buildGraph(graph, title, bar_secs, elems) {
     total_max = b_total;
    data.push( [b_pos, b_in, b_out] );
  }
+
+ graph_width = getParameterByName('w',graph_width);
+ graph_height = getParameterByName('h',graph_height);
 
  var igraph = makeElemClass("div", "graph"); // inner graph
  setStyle(igraph,

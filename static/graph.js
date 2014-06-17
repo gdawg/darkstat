@@ -177,7 +177,7 @@ function reload_loop() {
 }
 
 function graph_dimensions(width, height, cols) {
-  window.location.assign( window.location.href.replace(/\?.*/,
+  window.location.assign( window.location.href.replace(/(\?.*|$)/,
       "?w=" + width + "&h=" + height + "&c=" + cols) );
 }
 
